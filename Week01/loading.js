@@ -1,15 +1,17 @@
 import * as THREE from 'three';
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
-// import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+
 export class Loadings {
     constructor(main) {
         this.main = main;
         this.scene = main.scene;
 
-        this.OBJloader = new OBJLoader();
-        this.FBXloader = new FBXLoader();
+        this.loader = new OBJLoader();
+        // this.OBJloader = new OBJLoader();
+        this.GLTFloader = new GLTFLoader();
 
         this.textureLoader = new THREE.TextureLoader();
 
@@ -44,8 +46,8 @@ export class Loadings {
     }
 
     async load3DModels() {
-        this.m_iceCream = await this.loading3DModel('../assest/models/ice-cream.obj', 'ice_cream');
-        
+        this.m_carbody = await this.loading3DModel('./assest/models/carbody.obj', 'carbody');
+        this.m_carWheel = await this.loading3DModel('./assest/models/carwheel.obj', 'carWheel');
     }
 
     async loadingTexture(src) {
@@ -54,20 +56,8 @@ export class Loadings {
         });
     }
     async loading3DModel(src, theName) {
-        const that = this;
         return new Promise((resolve, reject) => {
-            const extension = src.split('.').pop().toLowerCase();// 判断文件扩展名
-            let loader;
-            if (extension === 'obj') {
-                loader = this.OBJloader;
-            } else if (extension === 'fbx') {
-                loader = this.FBXloader;
-            } else {
-                reject(new Error('沒有此格式'));
-                return;
-            }
-
-            loader.load(src, (object) => {
+            this.loader.load(src, (object) => {
                 object.name = theName;
                 object.traverse(function (child) {
                     if (child instanceof THREE.Mesh) {
@@ -79,6 +69,21 @@ export class Loadings {
             }, undefined, reject);
         });
     }
+    async loadingGLTF3DModel(src, theName) {
+        return new Promise((resolve, reject) => {
+            this.GLTFloader.load(src, (object) => {
+                object.name = theName;
+                object.traverse(function (child) {
+                    if (child instanceof THREE.Mesh) {
+                        // child.castShadow = true;
+                        // child.receiveShadow = true;
+                    }
+                });
+                resolve(object);
+            }, undefined, reject);
+        });
+    }
+
     handleLoadingSuccess() {
         this.loadingCount++;
         this.checkLoadingComplete();
@@ -100,4 +105,3 @@ export class Loadings {
         this.main.createObj(); // 呼叫主程式中 生成物的初始化方法
     }
 }
-

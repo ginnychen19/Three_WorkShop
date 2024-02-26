@@ -1,9 +1,13 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 import { Loadings } from './loading.js';
+import { InputHandler } from './input.js';
+import { Player } from './player.js';
 import { Camera } from './camera.js';
+
 
 
 class ThreeScene {
@@ -14,15 +18,18 @@ class ThreeScene {
         this.Camera = new Camera(this);
         this.camera = this.Camera.camera;
 
-        this.controls = new OrbitControls(this.camera, this.renderer.domElement);//兩個都要有
-        this.controls.enabled = true; //啟用縮放
-        // this.controls.enableZoom = true; //啟用縮放
-        // this.controls.enablePan = false; //關閉平移
-        this.controls.enableDamping = true; // 啟用阻尼效果
-        this.controls.dampingFactor = 0.25; // 阻尼系數
-    
+        // this.controls = new OrbitControls(this.camera, this.renderer.domElement);//兩個都要有
+        // this.controls.enabled = true; //啟用縮放
+        // // this.controls.enableZoom = true; //啟用縮放
+        // // this.controls.enablePan = false; //關閉平移
+        // this.controls.enableDamping = true; // 啟用阻尼效果
+        // this.controls.dampingFactor = 0.25; // 阻尼系數
 
         this.LD = new Loadings(this);
+
+        this.Input = new InputHandler(this);
+        this.keys = [];
+        this.player = new Player(this);
 
         this.height = window.innerHeight;
         this.width = window.innerWidth;
@@ -53,19 +60,24 @@ class ThreeScene {
         this.createRenderer();
 
         this.Camera.init();
-        this.scene.add(this.camera);
+
+        this.player.init();
 
         // this.Particle.init();
         // this.Render.init();
     }
     update() {
+        // console.log(this.keys);
+
         this.Camera.update();
+        this.player.movement();
         // this.Buildings.update();
         // this.Particle.update();
     }
 
     createScene() {
-        this.scene.fog = new THREE.FogExp2(0xffffaa, 0.01);
+        this.scene.fog = new THREE.Fog(0xffffaa, 1000, 2000)
+        // this.scene.fog = new THREE.FogExp2(0xffffaa, 0.001);
         this.scene.background = new THREE.Color(0xffffaa);
     }
     creatSkybox() {
@@ -82,7 +94,7 @@ class ThreeScene {
     createLights() {
         //環境光
         const ambiColor = "#ffffff";
-        this.ambientLight = new THREE.AmbientLight(ambiColor, 0.5);
+        this.ambientLight = new THREE.AmbientLight(ambiColor, 1.0);
 
         //半球光
         this.hemisphereLight = new THREE.HemisphereLight("#FFFFFF", "#AAAAFF");
@@ -131,33 +143,36 @@ class ThreeScene {
     }
 
     createObj() {
+        const that = this;
         const Mt_map = [
-            new THREE.MeshLambertMaterial({//龍
-                color: 0xF55500,
-                side: THREE.DoubleSide,
+            new THREE.MeshLambertMaterial({
+                color: 0x434343,
+                // side: THREE.DoubleSide,
             }),
-            new THREE.MeshLambertMaterial({//龍
+            new THREE.MeshLambertMaterial({
                 color: 0xFFFF00,
-                side: THREE.DoubleSide,
+                // side: THREE.DoubleSide,
             }),
         ]
 
-        this.LD.m_iceCream.traverse(function (child) {
-            if (child instanceof THREE.Mesh) {
-                child.material = Mt_map[0];
-            }
-        });
-        this.LD.m_iceCream.scale.set(10, 10, 10);
-        this.LD.m_iceCream.position.set(-20, -3, -40);
-        this.LD.m_iceCream.rotation.set(0, THREE.MathUtils.degToRad(-75), 0);
-
-        this.scene.add(this.LD.m_iceCream);
-
         /* 日 */
-        const geometry = new THREE.SphereGeometry(10, 16, 16);
+        const geometry = new THREE.SphereGeometry(2, 16, 16);
         const sphere = new THREE.Mesh(geometry, Mt_map[1]);
-        sphere.position.set(0, 35, 0);
+        sphere.position.set(0, 20, 0);
         this.scene.add(sphere);
+        /* 地板 */
+        const planeGeom = new THREE.PlaneGeometry(2500, 2500, 1, 1);
+        const plane = new THREE.Mesh(planeGeom, Mt_map[0]);
+        plane.rotation.x = -Math.PI / 2;
+        plane.position.set(0, -1, 0);
+        this.scene.add(plane);
+
+        /* 車身 */
+        const loader = new GLTFLoader().setPath('./assest/models/');
+        /* 場景 */
+        loader.load('city.glb', function (gltf) {
+            that.scene.add(gltf.scene);
+        });
     }
 }
 
