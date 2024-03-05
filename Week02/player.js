@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-
+// import * as RAPIER from '@dimforge/rapier3d';
 
 export class Player {
     constructor(main) {
@@ -23,6 +23,7 @@ export class Player {
     }
     init() {
         this.addmesh();
+        // console.log(RAPIER);
     }
 
 
@@ -40,9 +41,9 @@ export class Player {
             console.log(that.carbody.position);
             that.main.camera.position.set(0, 300, 500);
             that.main.camera.lookAt(that.carbody.position);
-            that.carbody.add(that.scene.camera); //相機追蹤
         });
 
+        // that.carbody.add(that.scene.camera); //相機追蹤
         /* 輪胎 */
         loader.load('carwheel.glb', function (gltf) {
             that.carwheel = gltf.scene;

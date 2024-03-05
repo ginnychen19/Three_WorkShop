@@ -10,15 +10,12 @@ export class Loadings {
         this.scene = main.scene;
 
         this.loader = new OBJLoader();
-        // this.OBJloader = new OBJLoader();
+        this.OBJloader = new OBJLoader();
+        this.FBXLoader = new FBXLoader();
         this.GLTFloader = new GLTFLoader();
 
         this.textureLoader = new THREE.TextureLoader();
-
         this.mixer
-
-        this.loadingCount = 0;
-        this.loadingMax = 2;
     }
     /*
        t_物件名稱 => 表示貼圖類資源

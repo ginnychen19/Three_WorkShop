@@ -1,29 +1,30 @@
 import * as THREE from 'three';
+import * as RAPIER from '@dimforge/rapier3d-compat';
+
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 import { Loadings } from './loading.js';
 import { InputHandler } from './input.js';
 import { Player } from './player.js';
 import { Camera } from './camera.js';
 
+import { PhysicsWorld } from './physicsWorld.js';
 
 
 class ThreeScene {
     constructor() {
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.scene = new THREE.Scene();
-
         this.Camera = new Camera(this);
         this.camera = this.Camera.camera;
+        this.controls = new OrbitControls(this.camera, this.renderer.domElement);//兩個都要有
+        this.controls.enabled = true; //啟用縮放
+        // this.controls.enableZoom = true; //啟用縮放
+        // this.controls.enablePan = false; //關閉平移
+        this.controls.enableDamping = true; // 啟用阻尼效果
+        this.controls.dampingFactor = 0.25; // 阻尼系數
 
-        // this.controls = new OrbitControls(this.camera, this.renderer.domElement);//兩個都要有
-        // this.controls.enabled = true; //啟用縮放
-        // // this.controls.enableZoom = true; //啟用縮放
-        // // this.controls.enablePan = false; //關閉平移
-        // this.controls.enableDamping = true; // 啟用阻尼效果
-        // this.controls.dampingFactor = 0.25; // 阻尼系數
+        
 
         this.LD = new Loadings(this);
 
@@ -31,26 +32,12 @@ class ThreeScene {
         this.keys = [];
         this.player = new Player(this);
 
+        this.physicsWorld = new PhysicsWorld(this.scene);
+
         this.height = window.innerHeight;
         this.width = window.innerWidth;
 
-        this.loader = new OBJLoader();
-        this.textureLoader = new THREE.TextureLoader();
-
         this.onWindowResize(this);
-
-        // this.Buildings = new Buildings(this);
-        // this.Particle = new Particle(this);
-
-        // //發光圖層
-        // this.BLOOM_SCENE = 1;
-        // this.bloomLayer = new THREE.Layers();
-        // this.bloomLayer.set(this.BLOOM_SCENE);
-        // this.Render = new Render(this);
-
-        // //所有點擊互動
-        this.raycaster = new THREE.Raycaster(); //點擊模型事件
-        this.mouse = new THREE.Vector2();
     }
     async init() {
         await this.LD.init();
@@ -63,16 +50,13 @@ class ThreeScene {
 
         this.player.init();
 
-        // this.Particle.init();
-        // this.Render.init();
+        animate();
     }
     update() {
-        // console.log(this.keys);
-
         this.Camera.update();
         this.player.movement();
-        // this.Buildings.update();
-        // this.Particle.update();
+
+        this.physicsWorld.update();
     }
 
     createScene() {
@@ -81,15 +65,6 @@ class ThreeScene {
         this.scene.background = new THREE.Color(0xffffaa);
     }
     creatSkybox() {
-        // const sphere03 = new THREE.SphereGeometry(300, 300, 40);
-        // sphere03.applyMatrix4(new THREE.Matrix4().makeScale(-1, 1, 1));
-        // this.LD.t_skybox.anisotropy = 16; // 調整各向異性過濾，可以適當增加紋理的清晰度
-        // const sphereMaterial03 = new THREE.MeshStandardMaterial({
-        //     map: this.LD.t_skybox,
-        //     emissive: 0xffffff, //讓背景亮一點
-        // });
-        // this.sphereMesh03 = new THREE.Mesh(sphere03, sphereMaterial03);
-        // this.scene.add(this.sphereMesh03);
     }
     createLights() {
         //環境光
@@ -121,11 +96,8 @@ class ThreeScene {
     createRenderer() {
         /* 建立渲染器 */
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.alpha = true;
         this.renderer.shadowMap.enabled = true;
-
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-
         $(this.renderer.domElement).addClass("canvas3D");
         $("#webgl").append(this.renderer.domElement);
     }
@@ -134,9 +106,6 @@ class ThreeScene {
             that.camera.aspect = window.innerWidth / window.innerHeight;
             that.camera.updateProjectionMatrix();
             that.renderer.setSize(window.innerWidth, window.innerHeight);
-            /* 記得後期渲染的部分也要跟著重設大小 */
-            // that.Render.bloomComposer.setSize(window.innerWidth, window.innerHeight);
-            // that.Render.finalComposer.setSize(window.innerWidth, window.innerHeight);
             that.windowWidth = window.innerWidth;
             that.windowHeight = window.innerHeight;
         });
@@ -155,45 +124,40 @@ class ThreeScene {
             }),
         ]
 
-        /* 日 */
-        const geometry = new THREE.SphereGeometry(2, 16, 16);
-        const sphere = new THREE.Mesh(geometry, Mt_map[1]);
-        sphere.position.set(0, 20, 0);
-        this.scene.add(sphere);
-        /* 地板 */
+        // /* 日 */
+        // const geometry = new THREE.SphereGeometry(2, 16, 16);
+        // const sphere = new THREE.Mesh(geometry, Mt_map[1]);
+        // sphere.position.set(0, 20, 0);
+        // this.scene.add(sphere);
+        // /* 地板 */
         const planeGeom = new THREE.PlaneGeometry(2500, 2500, 1, 1);
         const plane = new THREE.Mesh(planeGeom, Mt_map[0]);
         plane.rotation.x = -Math.PI / 2;
         plane.position.set(0, -1, 0);
         this.scene.add(plane);
 
-        /* 車身 */
-        const loader = new GLTFLoader().setPath('./assest/models/');
-        /* 場景 */
-        loader.load('city.glb', function (gltf) {
-            that.scene.add(gltf.scene);
-        });
     }
 }
 
-window.addEventListener('load', function () {
-    const app = new ThreeScene();
-    app.init();
-    animate();
 
-    function animate() {
-        requestAnimationFrame(animate);
-        app.update();
 
-        // 加入這行，讓渲染器每秒一直跑，更新畫面
-        app.renderer.render(app.scene, app.camera);
+const app = new ThreeScene();
+app.init();
 
-        // 會有這行是因為我還把Render丟到額外的檔
-        // if (app.Render.finalComposer) {
-        //     app.Render.update();
-        // }
-    }
-});
+function animate() {
+    requestAnimationFrame(animate);
+    app.update();
+
+
+    // 加入這行，讓渲染器每秒一直跑，更新畫面
+    app.renderer.render(app.scene, app.camera);
+
+    // 會有這行是因為我還把Render丟到額外的檔
+    // if (app.Render.finalComposer) {
+    //     app.Render.update();
+    // }
+}
+
 
 
 
