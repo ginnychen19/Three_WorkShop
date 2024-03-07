@@ -78,7 +78,7 @@ export class PhysicsWorld {
         return model;
     }
 
-    createRigidBody(model, position, type = 'dynamic') {
+    createRigidBody(model, position, type = 'dynamic', mass = 1) {
         let points = [];
         let rigidBodyDesc;
     
@@ -123,7 +123,9 @@ export class PhysicsWorld {
         });
     
         // 這個就是物理禿包計算
-        const hullColliderDesc = RAPIER.ColliderDesc.convexHull(points);
+        const hullColliderDesc = RAPIER.ColliderDesc.convexHull(points)
+        .setMass(mass); // 在這裡加入重量
+
         this.world.createCollider(hullColliderDesc, rigidBody);
     
         return { model, rigidBody, rigidBodyDesc };

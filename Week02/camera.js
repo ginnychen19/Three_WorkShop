@@ -8,7 +8,7 @@ export class Camera {
         this.renderer = main.renderer;
 
         this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 3000);
-        this.camera.position.set(0, 50, -100);
+        this.camera.position.set(0, 25, 50);
         this.camera.lookAt(0, 0, 0);
         this.cameraState = "init";
 

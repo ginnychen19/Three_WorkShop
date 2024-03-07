@@ -10,7 +10,7 @@ import { Player } from './player.js';
 
 class ThreeScene {
     constructor() {
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
         this.scene = new THREE.Scene();
         this.Camera = new Camera(this);
         this.camera = this.Camera.camera;

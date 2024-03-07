@@ -114,14 +114,14 @@ export class PhysicsWorld {
         // 物理設地板
         const r_body = this.world.createRigidBody(RAPIER.RigidBodyDesc.fixed());
         r_body.setTranslation(new THREE.Vector3(0, 0, 0));
-        
+
         //setTranslation 設置剛體的位置 , cuboid( 方塊形狀 )
         this.world.createCollider(RAPIER.ColliderDesc.cuboid(250, 1, 250), r_body);
 
         return model;
     }
     /* 其他物件的RigidBody製作 */
-    createRigidBody(model, position, type = 'dynamic') {
+    createRigidBody(model, position, type = 'dynamic', mass = 1) {
         let points = [];
         let rigidBodyDesc;
 
@@ -166,7 +166,8 @@ export class PhysicsWorld {
         });
 
         // 這個就是物理禿包計算
-        const hullColliderDesc = RAPIER.ColliderDesc.convexHull(points);
+        const hullColliderDesc = RAPIER.ColliderDesc.convexHull(points).setMass(mass); //在這裡加入重量
+        
         this.world.createCollider(hullColliderDesc, rigidBody);
 
         return { model, rigidBody, rigidBodyDesc };
