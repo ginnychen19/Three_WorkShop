@@ -1,10 +1,10 @@
 // main.js
 /*
   把整個 main()包成 async/await
-  01.建立基礎世界 + Resize
-  02.建立物理世界，包含產生凸包碰狀與debugger
-  03.load模型
-  04.處理需要更新的內容
+  A.建立基礎世界 + Resize
+  B.建立物理世界，包含產生凸包碰狀與debugger
+  C.load模型
+  D.處理需要更新的內容
 
 */
 import * as THREE from 'three';

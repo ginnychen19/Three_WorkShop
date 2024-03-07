@@ -35,6 +35,7 @@ export class Controls {
            是用來檢查陣列裡面是否有一些符合條件。
            只要有一個以上符合條件就會回傳 true，全部都不是的話會回傳 false。
         */
+        /* ，key 是 keyArray 中的元素，这个方法会遍历 keyArray 中的每一个 key */
         return keyArray.some(key => this.keysPressed[key]);
     }
 

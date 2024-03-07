@@ -8,14 +8,8 @@ export class Camera {
         this.renderer = main.renderer;
 
         this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 3000);
-
-        this.railRadius = 50; //假設攝影機軌道半徑為20單位
-        this.zoon = 5;
-        this.zoonMax = 30;
-        this.zoonMin = 20;
-        this.cursor = new THREE.Vector2(); // 建立一個Vector2來記錄滑鼠位置。
-
-        this.canUseMouse = true;
+        this.camera.position.set(0, 50, -100);
+        this.camera.lookAt(0, 0, 0);
         this.cameraState = "init";
 
         this.raycaster = new THREE.Raycaster();
@@ -23,7 +17,6 @@ export class Camera {
     }
     init() {
         const that = this; 
-       
         // if (this.cameraState == "init") {
         //     const gsapTL = gsap.timeline();
         //     this.camera.position.set(0, 50, 50);

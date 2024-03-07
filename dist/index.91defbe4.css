@@ -1,0 +1,76 @@
+:root {
+  --color01: #f7f8f8;
+  --color02: #9fa0a0;
+  --color03: #525152;
+  --Green: #005253;
+  --YWhite: #e6e1cc;
+  --River: #bffff5;
+  --GreenRiver: #63aea8;
+  --DGreenRiver: #266f72;
+  --Green02: #628e59;
+  --Green03: #a3cf78;
+  --Green04: #87c379;
+  --BG_LYellow: #f0da99;
+  --BG_LOrange: #f3d1b2;
+  --BG_MOrange: #f7bc88;
+  --Brown01: #5c3a31;
+  --Brown02: #835b36;
+  --Brown03: #bb8058;
+  --Brown04_BE: #b79779;
+  --Brown05_BEtxt: #876464;
+  --BTN_Red: #e3344b;
+  --BTN_Green: #337e47;
+  --BTN_Yellow: #f39800;
+  --BTN_Blue: #0061f3;
+  --pLabel: 80px;
+  --pBTitle: 58px;
+  --pMTitle: 40px;
+  --pSTitle: 28px;
+  --pContent: 18px;
+  --pSContent: 14px;
+  --gameUIwidth: 900;
+  --gameUIheight: 500;
+  --Zindex_canvas3D: 0;
+  --Zindex_allUI: 1;
+  --Zindex_loadingUI: 10;
+  --Zindex_mazuLoading: 2;
+  --Zindex_whiteBall: 1;
+  --Zindex_controlDom: 0;
+  --Zindex_BasicInterface: 2;
+  --Zindex_joystick: 1;
+}
+
+ul > li, h1, h2, h3, h4, h5, h6, p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.hidden {
+  display: none !important;
+}
+
+body {
+  justify-content: center;
+  align-self: center;
+  margin: 0;
+  padding: 0;
+  display: flex;
+}
+
+#container {
+  width: 100%;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+}
+
+#webgl, #css3d {
+  opacity: 1;
+  width: 100%;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/*# sourceMappingURL=index.91defbe4.css.map */

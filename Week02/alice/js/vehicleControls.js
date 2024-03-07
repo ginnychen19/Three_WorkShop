@@ -25,19 +25,20 @@ import { keyboardState, touchState } from './gameState';
 
 /* 我原本的結構幾乎把東西初始化在constructor，但這有時會讓我比較難取得其他物件! */
 export class VehicleControls {
-    constructor(scene, physicsWorld, chassis, wheels, wheelsKinematic, controls, camera) {
-        this.scene = scene;
+    constructor(main, physicsWorld, chassis, wheels, wheelsKinematic, controls, camera) {
+        this.main = main;
+        this.scene = main.scene;
         this.physicsWorld = physicsWorld;//取得物理世界
         this.chassis = chassis; //汽車模型 - 從主線程取得
         /* 車身設定 */
-        this.chassisDynamic = physicsWorld.createRigidBody(chassis, { x: 0, y: 3, z: 4 }, 'dynamic', 'carBody');
+        //請注意，車身需要設定重量，這邊用1200
+        this.chassisDynamic = physicsWorld.createRigidBody(chassis, { x: 0, y: 3, z: 4 }, 'dynamic', 1200);
         this.chassisDynamic.rigidBodyDesc
             .setCanSleep(false)
-            .setAngularDamping(0.1)
-            .setLinearDamping(0.1);
+            .setAngularDamping(0.8)
+            .setLinearDamping(0.3);
         /* 要設質量 */
         this.wheels = wheels;
-        this.wheelsKinematic = []; //沒用到
         this.controls = controls;
         this.camera = camera;
 
@@ -74,16 +75,27 @@ export class VehicleControls {
 
         /* 03.配置悬挂系统 */
         this.wheels.forEach((_, i) => {
+            // 設定懸掛的靜止長度，即輪子在未受力時離車身的距離。調整這個值可以改變車輛的高度，影響車輛的重心和穩定性
             this.vehicleController.setWheelSuspensionRestLength(i, suspensionRestLength); // 設定第 i 個車輪懸吊彈簧的剩餘長度。
+            // 設定輪胎的摩擦滑移值，這個值影響輪胎與地面之間的摩擦力。較高的值增加摩擦力，提高車輛的抓地力，有助於減少轉向時的滑動或翻車風險
             this.vehicleController.setWheelFrictionSlip(i, 1); // 設定輪子摩擦力比較能避免轉向時翻車，設定 1 以下
+            // 設定輪胎側向摩擦的硬度。這個參數影響輪胎在側向受力時的反應，直接關係到轉向時的車輛穩定性和抓地性
             this.vehicleController.setWheelSideFrictionStiffness(i, 1); // 輪胎與其上方的對撞機之間的摩擦係數。數值越大，側面摩擦力越強。
+            // 設定懸掛的硬度。懸掛硬度越高，車輛對路面不平的響應越小，但過硬的懸掛可能會降低舒適性和輪胎的抓地力
             this.vehicleController.setWheelSuspensionStiffness(i, suspensionStiffness); // 車輪懸吊剛度，影響車子有多彈跳
+            // 設定懸掛可以承受的最大力量。這個值確保了在極端條件下，懸掛不會被過度壓縮，從而保持車輛的穩定性和防止車輛底盤碰撞地面
             this.vehicleController.setWheelMaxSuspensionForce(i, 10000); // 設置第 i 個車輪懸架施加的最大力。
+            // 設定懸掛的最大行程，即懸掛可以壓縮的最大距離。適當的懸掛行程可以提供良好的路感和足夠的吸震效果，提高車輛的過彎性能和舒適性
             this.vehicleController.setWheelMaxSuspensionTravel(i, maxSuspensionTravel); // 設置第 i 個車輪懸架在其靜止長度之前和之後可以行駛的最大距離。
+            // 設定懸掛壓縮時的阻尼比率。這個參數影響懸掛壓縮（如過坎時）的速度，適當的阻尼可以提高車輛的穩定性和舒適性
             this.vehicleController.setWheelSuspensionCompression(i, 1.0); // 第 i 個車輪的懸吊壓縮時的阻尼。
+            // 設定懸掛回彈時的阻尼比率。這個參數影響懸掛在壓縮後回到正常狀態的速度，合理的設定有助於保持車輛的平衡和提高輪胎的抓地力
             this.vehicleController.setWheelSuspensionRelaxation(i, 1.0); // 設定第 i 個車輪的懸吊釋放時的阻尼。如果懸吊出現超調，請增加此值
         });
     }
+
+
+
 
     /* 物理移動計算 */
     update() {
@@ -91,33 +103,54 @@ export class VehicleControls {
         this.mergeInputStates();
 
         // 定義加速力與煞車力
-        const accelerateForce = 15;     //加速力
-        const brakeForce = 12;          //煞車力
-        const emergencyBrakeForce = 30; //急煞車力
+        const accelerateForce = 3000;     //加速力
+        const brakeForce = 3000;          //煞車力
+        const emergencyBrakeForce = 5000; //急煞車力
 
         // 依照車輛目前速度調整轉向靈敏度
+        // 這是為了讓車子旋轉時不會翻車
+        const maxSpeedForTurning = 8; // 定义最大速度，超过此速度转向幅度将减小
+        let currentSpeed = this.vehicleController.currentVehicleSpeed();
+        let steerAngle = Math.PI / 8; // 默认转向角度
+        
+        // 如果当前速度超过了定义的最大速度，减小转向角度
+        if (currentSpeed > maxSpeedForTurning) {
+            // 根据速度调整转向角度，速度越高，转向角度越小
+            steerAngle *= (maxSpeedForTurning / currentSpeed); // 示例调整方式，可根据需要进行调整
+        }
+
+
         // 檢查是否有急剎車輸入，這裡需要您根據實際的輸入系統來設定檢測方式
         // 假設急剎車是一個單獨的輸入而不是普通剎車輸入的高強度版本
-        // 前輪動 + 前輪轉
-
         /* B.煞車邏輯處理 */
-        const isEmergencyBraking = this.gameState.emergencyBrake;
-        // 計算煞車力，如果是急煞車則使用急煞車力
-        const totalBrakeForce = isEmergencyBraking ? emergencyBrakeForce : brakeForce;
-        // 如果有煞車輸入，則應用煞車力到所有輪子
-        if (this.gameState.brake || isEmergencyBraking) {
-            for (let i = 0; i < this.wheels.length; i++) {
-                this.vehicleController.setWheelBrakeForce(i, totalBrakeForce);
-            }
+        if (this.gameState.emergencyBrake) {
+            // 急煞
+            this.vehicleController.setWheelBrake(2, emergencyBrakeForce);
+            this.vehicleController.setWheelBrake(3, emergencyBrakeForce);
+        } else if (this.gameState.drift) {
+            // 甩尾
+            // 減少後輪的摩擦力以促進滑動
+            this.vehicleController.setWheelFrictionSlip(2, 1.0); // 假設值，需要根據效果進行調整
+            this.vehicleController.setWheelFrictionSlip(3, 1.0);
+            // 同時對後輪施加煞車力
+            this.vehicleController.setWheelBrake(2, brakeForce);
+            this.vehicleController.setWheelBrake(3, brakeForce);
         } else {
-            // 沒有煞車輸入時，確保煞車力為0
-            for (let i = 0; i < this.wheels.length; i++) {
-                this.vehicleController.setWheelBrakeForce(i, 0);
-            }
+            // 恢復後輪的摩擦力
+            this.vehicleController.setWheelFrictionSlip(2, 1.5);
+            this.vehicleController.setWheelFrictionSlip(3, 1.5);
+            // 移除煞車力
+            this.vehicleController.setWheelBrake(2, 0);
+            this.vehicleController.setWheelBrake(3, 0);
         }
+
+
+
+
         /* C.加速邏輯 */
         // Number(this.gameState.accelerate) 換成0或1
-        const engineForce = Number(this.gameState.accelerate) * accelerateForce;
+        // 舊的 const engineForce = Number(this.gameState.accelerate) * accelerateForce;
+        const engineForce = Number(this.gameState.accelerate) * accelerateForce - Number(this.gameState.brake) * brakeForce;
         this.vehicleController.setWheelEngineForce(0, engineForce); //兩個前輪往前
         this.vehicleController.setWheelEngineForce(1, engineForce);
 

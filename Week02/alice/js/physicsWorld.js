@@ -128,8 +128,7 @@ export class PhysicsWorld {
     
         return { model, rigidBody, rigidBodyDesc };
     }
-
-
+    
     update() {
         this.step();
         // 把所有的物理位置更新到模型上
