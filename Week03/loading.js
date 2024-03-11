@@ -15,6 +15,14 @@ export class Loadings {
         this.FBXLoader = new FBXLoader();
         this.GLTFloader = new GLTFLoader();
 
+        // 創建一個 DRACOLoader 實例
+        this.dracoLoader = new DRACOLoader();
+        this.dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+        this.dracoLoader.setDecoderConfig({ type: 'js' });
+        this.GLTFloader.setDRACOLoader(this.dracoLoader);
+
+        this.worker = new Worker(new URL('./modelLoaderWorker.js', import.meta.url));
+
         this.textureLoader = new THREE.TextureLoader();
         this.mixer
     }
@@ -24,23 +32,22 @@ export class Loadings {
        p_物件名稱 => 表示粒子貼圖類資源
     */
 
-    async init(fun_createSence,fun_createvehicle) {
+    async init(fun_createSence, fun_createvehicle) {
         try {
-            const [
-                m_city,
-                m_carbody,
-                m_carWheel
-            ] = await Promise.all([
-                this.loadingGLTF3DModel('./assest/models/city.glb', 'city'),//實際場景
-                this.loadingGLTF3DModel('./assest/models/carbody.glb', 'carbody'),//碰撞場警
-                this.loadingGLTF3DModel('./assest/models/carwheel.glb', 'carWheel'),//實際場景
+            const m_city = await Promise.all([
+                this.loadingGLTF3DModel('./assest/models/city.glb', 'city')
+            ]);
+            const m_carbody = await Promise.all([
+                this.loadingGLTF3DModel('./assest/models/carbody.glb', 'carbody')
+            ]);
+            const m_carWheel = await Promise.all([
+                this.loadingGLTF3DModel('./assest/models/carwheel.glb', 'carWheel')
             ]);
 
+
             // 所有資源載入完成後執行後續操作
-            fun_createSence(m_city);
-            fun_createvehicle(m_carbody,m_carWheel);
-            // const createScene = physicsWorld.createScene(collider.scene);
-            // colliderModel = createScene;
+            fun_createSence(...m_city);
+            fun_createvehicle(...m_carbody, ...m_carWheel);
         } catch (error) {
             console.error("Error loading resources:", error);
         }
@@ -58,7 +65,7 @@ export class Loadings {
                 object.traverse(function (child) {
                     if (child instanceof THREE.Mesh) {
                         child.castShadow = true;
-                        child.receiveShadow = true;
+
                     }
                 });
                 resolve(object);
@@ -66,35 +73,51 @@ export class Loadings {
         });
     }
     /* 和OBJ還有Fbx不同，gltf或glb需要找到 .scene 才是模型 */
+
     async loadingGLTF3DModel(src, theName) {
         return new Promise((resolve, reject) => {
-            this.GLTFloader.setDRACOLoader(new DRACOLoader().setDecoderPath('three/examples/jsm/libs/draco/gltf/'))
-                .load(src, (gltf) => {
-                    gltf.name = theName;
-                    gltf.scene.name = theName;
-                    gltf.scene.traverse(function (child) {
-                        if (child instanceof THREE.Mesh) {
-                            child.castShadow = true;
-                            child.receiveShadow = true;
-                        }
-                    });
-                    resolve(gltf.scene);
-                }, undefined, reject);
+            // 傳資訊給worker
+            this.worker.postMessage({ action: 'load', url: src });
+
+            // worker返回模型資訊，解析的工作回到主線程
+            this.worker.onmessage = (event) => {
+                if (event.data.action === 'loaded') {
+                    const arrayBuffer = event.data.model;
+
+                    // 用GLTFloader的.parse方法
+                    this.GLTFloader.parse(arrayBuffer, '', (gltf) => {
+                        gltf.name = theName;
+                        gltf.scene.name = theName;
+                        gltf.scene.traverse(function (child) {
+                            if (child instanceof THREE.Mesh) {
+                                child.castShadow = true;
+                                child.receiveShadow = true;
+                            }
+                        });
+
+                        resolve(gltf.scene);
+                    }, undefined, reject);
+                }
+            };
         });
     }
 
 }
 
-// async loadTextures() {
-//     //粒子特效
-//     // this.t_p_dot = await this.loadingTexture('../assest/img/particle/dot.png');
-//     // this.t_checkerboard = await this.loadingTexture('../assest/textures/checkerboard.jpg');
-// }
-// async load3DModels() {
-//     this.m_carbody = await this.loadingGLTF3DModel('./assest/models/carbody.glb', 'carbody');
-//     this.m_carWheel = await this.loadingGLTF3DModel('./assest/models/carwheel.glb', 'carWheel');
-// }
-// handleLoadingComplete() {
-//     // 在這裡執行所有資源載入完成後的後續操作
-//     this.main.createObj(); // 呼叫主程式中 生成物的初始化方法
+
+// async loadingGLTF3DModel(src, theName) {
+//     return new Promise((resolve, reject) => {
+//         this.GLTFloader.setDRACOLoader(new DRACOLoader().setDecoderPath('three/examples/jsm/libs/draco/gltf/'))
+//             .load(src, (gltf) => {
+//                 gltf.name = theName;
+//                 gltf.scene.name = theName;
+//                 gltf.scene.traverse(function (child) {
+//                     if (child instanceof THREE.Mesh) {
+//                         child.castShadow = true;
+//                         child.receiveShadow = true;
+//                     }
+//                 });
+//                 resolve(gltf.scene);
+//             }, undefined, reject);
+//     });
 // }

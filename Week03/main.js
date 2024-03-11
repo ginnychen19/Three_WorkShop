@@ -56,8 +56,6 @@ class ThreeScene {
         const deltaTime = this.clock.getDelta();
         this.update();
         this.renderer.render(this.scene, this.camera);
-        /* 重要 ==> renderer 內建函數
-           setAnimationLoop 可以用來代替 requestAnimationFrame 的 內建函數。 */
         this.renderer.setAnimationLoop(this.animate.bind(this));
     }
 
@@ -129,12 +127,6 @@ class ThreeScene {
                 // side: THREE.DoubleSide,
             }),
         ]
-
-        /* 日 */
-        // const geometry = new THREE.SphereGeometry(2, 16, 16);
-        // const sphere = new THREE.Mesh(geometry, Mt_map[1]);
-        // sphere.position.set(0, 10, 0);
-        // this.scene.add(sphere);
 
         /* 地板 */
         const planeGeom = new THREE.PlaneGeometry(500, 500, 1, 1);

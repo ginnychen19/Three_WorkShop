@@ -57,3 +57,28 @@ player.js 的部分，主要處理了汽車模型、汽車物理的建立 <br>
 
 Week03 - 各種優化 <br>
 https://gotoo.co/demo/elizabeth/Frontend_Workshop/three/week03/ <br>
+
+在效能上，我用了壓縮模型和用WebWorker載入模型提升載入速度 <br>
+
+01.
+把Gltf模型載入變成WebWorker，可使用.parse方法解析Worker給的arrayBuffer <br>
+共享 arrayBuffer 是工作人員更快/更好地交換記憶體的一種方式。 <br>
+OBJ和FBX模型也有.parse <br>
+
+02.
+把貼圖載入變成WebWorker <br>
+https://levelup.gitconnected.com/improve-javascript-performance-with-offscreencanvas-1180dc5376e9 <br>
+https://discourse.threejs.org/t/web-worker-and-texture-transfer/44283 <br>
+
+03.
+使用DRACOLoader壓縮Gltf模型，要安裝套件然後壓縮模型 <br>
+https://vocus.cc/article/63ef1baffd897800018b6928 <br>
+
+未來可以再嘗試
+01. 可以使用OffscreenCanvas工作執行緒渲染整個場景，減少GPU負載  <br>
+    https://threejs.org/examples/webgl_worker_offscreencanvas <br>
+02. 加入攝影機碰撞，讓攝影機不會再被攝影機遮住 <br>
+    https://www.youtube.com/watch?v=USmB8e1AF8A <br>
+    https://discourse.threejs.org/t/camera-collision-detection/26543 <br>
+    https://yomotsu.github.io/camera-controls/ <br>
+   
